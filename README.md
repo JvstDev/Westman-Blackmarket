@@ -4,8 +4,7 @@
 ESX
 
 **Configuration**
-`
-Config = {
+`Config = {
  
   -- Your basename
   Engine = "es_extended", 
