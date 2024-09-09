@@ -6,7 +6,7 @@ ESX
 
 **Configuration**
 
-https://westman-resourcez.gitbook.io/westman-resourcez/westman_blackmarket/config.lua
+[https://westman-resourcez.gitbook.io/westman-resourcez/westman_blackmarket/config.lua](https://westman-resourcez.gitbook.io/docs/westman_blackmarket/config.lua)
 
 **Features**
 - Discord logs
