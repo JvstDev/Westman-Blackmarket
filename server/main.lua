@@ -1,42 +1,33 @@
-ESX = exports[Config.Engine]:getSharedObject()
 
-if Config.UseItem then
-ESX.RegisterUsableItem(""..Config.Item.."", function(source)
-  local src = source
-  local xPlayer = ESX.GetPlayerFromId(src)
+if not Config?.Item.Enabled then
+    ESX.RegisterUsableItem(Config.Item.Name, function(source)
+        local xPlayer = ESX.GetPlayerFromId(source)
 
-   TriggerClientEvent("westman_blackmarket:Open", source)
-end)
+        if xPlayer then
+            xPlayer.TriggerEvent("westman_blackmarket:Open")
+        end
+    end)
 end
 
-RegisterServerEvent("westman_blackmarket:Buy", function(item_name, item_hash, item_price, item_quantity)
-local src = source 
-local xPlayer = ESX.GetPlayerFromId(src)
-local get_player_black_money = xPlayer.getAccount("black_money").money
-local total_amount = item_price * item_quantity
+RegisterServerEvent("westman_blackmarket:Buy", function(data)
+    local source = source 
+    local xPlayer = ESX.GetPlayerFromId(source)
+    assert(xPlayer, ("Class not loaded (id: %s)"):format(source))
 
-if get_player_black_money >= total_amount then 
-  xPlayer.removeAccountMoney('black_money', total_amount)
-  xPlayer.addInventoryItem(item_hash, item_quantity)
-  xPlayer.showNotification(" "..Locales.you_bought.." "..item_quantity.."x "..item_hash.." ")
-else
-  xPlayer.showNotification(" "..Locales.not_enough_money.." "..get_player_black_money.." ")
-end
+    local account = Config.UseBlackMoney and "black_money" or "money"
+    local money = xPlayer.getAccount(account).money
+    local price = (data.item_price * data.item_quantity)
 
-  if Config.UseDiscordLogs then 
-    local webhook_url = "YOUR_DISCORD_WEBHOOK"
-    
-    local user = GetPlayerName(src)
-    local steamhex = GetPlayerIdentifier(src)
-    local information = {
-      {
-        ["title"] = "Westman Blackmarket",
-        ["description"] = "A player has made a purschase \nSteam name: **"..user.."** \n Steam hex: **"..steamhex.."** \nItem: **"..item_name.."** \nPrice: **"..total_amount.."**"
-      }
-    }
-    
-    if user then 
-      PerformHttpRequest(webhook_url, function(err, text, headers) end, "POST", json.encode({embeds = information}), { ['Content-Type'] = 'application/json' })
-       end
+    if money < price then
+        return  xPlayer.showNotification(TranslateCap("not_enough_money", money))
+    end
+
+    xPlayer.removeAccountMoney(account, price)
+    xPlayer.addInventoryItem(data.item_hash, data.item_quantity)
+    xPlayer.showNotification(TranslateCap("you_bought", data.item_quantity, data.item_hash))
+
+    if Config.DiscordLogs then
+        local message = "A player has made a purschase \nName: **%s** \nIdentifier: **%s** \nItem: **%s** \nPrice: **%s**"
+        ESX.DiscordLog("UserActions", "Westman Blackmarket", "pink", message:format(xPlayer.name, xPlayer.identifier, data.item_hash, price))
     end
 end)
